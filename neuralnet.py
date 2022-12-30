@@ -11,37 +11,119 @@ from typing import Tuple
 from typing import List
 
 class LayerInitializer:
+    """
+    Functions for layer weight initialization.
+    """
 
-    # https://arxiv.org/abs/1502.01852
+    # He normal initialization
     @staticmethod
     def he_normal(size: Tuple[int], fan_in: int) -> np.array:
+        """
+        HE NORMAL INITIALIZATION
+        Draws samples from a truncated normal distribution centered at 0 mean
+        with stddev = sqrt(2 / fan_in) where fan_in is the number of input
+        units per unit in the layer.
+        Parameters:
+            - size: Tuple[int] (rows, columns)
+                    shape of the initialized weight matrix
+            - fan_in: int
+                    number of input units per unit in the layer
+        Returns:
+            - np.array (rows, columns)
+                    He normal initialized weight matrix
+        Ref:
+            https://arxiv.org/abs/1502.01852
+        """
         return np.random.normal(0, math.sqrt(2 / fan_in), size = size)
 
-    # http://proceedings.mlr.press/v9/glorot10a.html
+    # Glorot / Xavier normal initialization
     @staticmethod
     def glorot_normal(size: Tuple[int], fan_in: int, fan_out: int) -> np.array:
+        """
+        GLOROT / XAVIER NORMAL INITIALIZATION
+        Draws samples from a truncated normal distribution centered at 0 mean
+        with stddev = sqrt(2 / (fan_in + fan_out)) where fan_in is the number of
+        input units per unit in the layer and fan_out is the number of output
+        units per unit in the layer.
+        Parameters:
+            - size: Tuple[int] (rows, columns)
+                    shape of the initialized weight matrix
+            - fan_in: int
+                    number of input units per unit in the layer
+            - fan_out: int
+                    number of output units per unit in the layer
+        Returns:
+            - np.array (rows, columns)
+                    Glorot normal initialized weight matrix
+        Ref:
+            http://proceedings.mlr.press/v9/glorot10a.html
+        """
         return np.random.normal(0, math.sqrt(2 / (fan_in + fan_out)), size = size)
 
-    # https://cs231n.github.io/neural-networks-2/
+    # Bias initialization
     @staticmethod
     def bias(size: Tuple[int]):
+        """
+        BIAS INITIALIZATION
+        Initializes the bias vector / matrix with zeros.
+        Parameters:
+            - size: Tuple[int] (rows, columns)
+                    shape of the initialized bias vector / matrix
+        Returns:
+            - np.array (rows, columns)
+                    Zero initialized bias vector / matrix
+        Ref:
+            https://cs231n.github.io/neural-networks-2/
+        """
         return np.zeros(shape = size)
 
 class ActivationFunctions:
+    """
+    Layer activation functions.
+    """
 
-    # https://en.wikipedia.org/wiki/Rectifier_(neural_networks)
+    # Rectified Linear Units
     @staticmethod
     def relu(x: np.array, derivative: bool = False) -> np.array:
+        """
+        RECTIFIED LINEAR UNITS
+        ReLU activation function.
+        Parameters:
+            - x: np.array
+                    input matrix to apply activation function to
+            - derivative: bool
+                    if set to 'True' returns the derivative instead
+                    DEFAULT: False
+        Returns:
+            - np.array (same shape as x)
+                    activated x / derivative of x
+        Ref:
+            https://en.wikipedia.org/wiki/Rectifier_(neural_networks)
+        """
         if not derivative:
             return np.maximum(x, 0)
         else:
             return np.where(x > 0, 1, 0)
 
-    # https://en.wikipedia.org/wiki/Sigmoid_function
-    # https://en.wikipedia.org/wiki/Activation_function
+    # Sigmoid activation function
     @staticmethod
     def sigmoid(x: np.array, derivative: bool = False) -> np.array:
-
+        """
+        SIGMOID / LOGISTIC FUNCTION
+        Sigmoid activation function.
+        Parameters:
+            - x: np.array
+                    input matrix to apply activation function to
+            - derivative: bool
+                    if set to 'True' returns the derivative instead
+                    DEFAULT: False
+        Returns:
+            - np.array (same shape as x)
+                    activated x / derivative of x
+        Refs:
+            https://en.wikipedia.org/wiki/Sigmoid_function
+            https://en.wikipedia.org/wiki/Activation_function
+        """
         def f_sigmoid(x: np.array) -> np.array:
             return 1 / (1 + np.exp(-x))
 
@@ -50,10 +132,22 @@ class ActivationFunctions:
         else:
             return f_sigmoid(x) * (1 - f_sigmoid(x))
 
-    # https://en.wikipedia.org/wiki/Softmax_function
-    # https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
+    # Softmax activation function
     @staticmethod
     def softmax(x: np.array, derivative: bool = False) -> np.array:
+        """
+        SOFTMAX FUNCTION
+        Stable softmax activation function.
+        Parameters:
+            - x: np.array
+                    input matrix to apply activation function to
+        Returns:
+            - np.array (same shape as x)
+                    activated x
+        Refs:
+            https://en.wikipedia.org/wiki/Softmax_function
+            https://eli.thegreenplace.net/2016/the-softmax-function-and-its-derivative/
+        """
         if not derivative:
             n = np.exp(x - np.max(x)) # stable softmax
             d = np.sum(n, axis = 0)
@@ -65,12 +159,16 @@ class ActivationFunctions:
             # return np.diagflat(x) - np.dot(xr, xr.T)
 
 class LossFunctions:
+    """
+    Loss functions for neural net fitting.
+    """
 
     # binary cross entropy loss
     @staticmethod
     def binary_cross_entropy(y_true: np.array, y_predicted: np.array) -> np.array:
         """
         BINARY CROSS ENTROPY LOSS
+        Cross entropy loss for binary-class classification.
         L[BCE] = - p(i) * log(q(i)) - (1 - p(i)) * log(1 - q(i))
         where
             - p(i) is the true label
@@ -99,6 +197,7 @@ class LossFunctions:
     def categorical_cross_entropy(y_true: np.array, y_predicted: np.array) -> np.array:
         """
         CATEGORICAL CROSS ENTROPY LOSS
+        Cross entropy loss for binary- and multi-class class classification.
         L[CCE] = - sum[from i = 0 to n]( p(i) * log(q(i)) )
         where
             - p(i) is the true label
@@ -125,15 +224,53 @@ class LossFunctions:
         return np.array(losses)
 
 class NeuralNetwork:
+    """
+    Implementation of a classic feed-forward neural network that is trained via
+    backpropagation. Adopts a Keras-like interface for convenient usage (see
+    https://michabirklbauer.github.io/neuralnet for examples).
+    """
 
+    # constructor
     def __init__(self, input_size: int):
-
+        """
+        CONSTRUCTOR
+        Initializes the neural network model.
+        Parameters:
+            - input_size: int
+                    nr. of features in the training data
+        Returns:
+            - None
+        Example usage:
+            NN = NeuralNetwork(data.shape[1])
+        """
         self.input_size = input_size
         self.architecture = []
         self.layers = []
 
+    # adding layers
     def add_layer(self, units: int, activation: str = "relu", initialization: str = None) -> None:
-
+        """
+        LAYER MANAGEMENT
+        Construct the neural network architecture by adding different layers.
+        Parameters:
+            - units: int
+                    nr. of units in the layer
+            - activation: str, one of ("relu", "sigmoid", "softmax")
+                    activation function of the layer
+                    DEFAULT: "relu"
+            - initialization: str, one of ("he", "glorot")
+                    weight initialization to use
+                    DEFAULT: None, "relu" layers are 'he normal' initialized,
+                                   all other layers are 'glorot normal'
+                                   initialized
+        Returns:
+            - None
+        Example usage:
+            NN = NeuralNetwork(data.shape[1])
+            NN.add_layer(16, "relu", "glorot")
+            NN.add_layer(8)
+            NN.add_layer(1, "sigmoid")
+        """
         if initialization == None:
             if activation == "relu":
                 layer_init = "he"
@@ -144,10 +281,28 @@ class NeuralNetwork:
 
         self.architecture.append({"units": units, "activation": activation, "init": layer_init})
 
+    # compiling model
     def compile(self, loss: str = "categorical crossentropy") -> None:
-
+        """
+        MODEL INITIALIZATION
+        Initializes all parameters of the neural network architecture and
+        prepares the model for training.
+        Parameters:
+            - loss: str, one of ("binary crossentropy", "categorical crossentropy")
+                    the loss function that should be used for training
+                    DEFAULT: "categorical crossentropy"
+        Returns:
+            - None
+        Example usage:
+            NN = NeuralNetwork(data.shape[1])
+            NN.add_layer(16, "relu", "glorot")
+            NN.add_layer(8)
+            NN.add_layer(1, "sigmoid")
+            NN.compile("binary crossentropy")
+        """
         self.loss = loss
 
+        # initialize all layer weights and biases
         for i in range(len(self.architecture)):
             units = self.architecture[i]["units"]
             activation = self.architecture[i]["activation"]
@@ -171,7 +326,20 @@ class NeuralNetwork:
 
             self.layers.append({"W": W, "b": b, "activation": activation})
 
+    # forward propagation
     def __forward_propagation(self, data: np.array) -> None:
+        """
+        FORWARD PROPAGATION (INTERNAL)
+        Internal function calculating the forward pass of A(Wx + b).
+            - The result of 'Wx + b' (L) is stored in self.layers[layer]["L"]
+            - The result of 'Activation(L)' (A) is stored in self.layers[layer]["A"]
+        Parameters:
+            - data: np.array
+                    input data for the forward pass
+        Returns:
+            - None, "L" and "A" are set in the layer dictionary, to retrieve the
+                    last layer output call 'self.layers[-1]["A"]'
+        """
 
         for i in range(len(self.layers)):
 
@@ -180,6 +348,8 @@ class NeuralNetwork:
             else:
                 A = self.layers[i - 1]["A"]
 
+            # Wx + b where x is the input data for the first layer and otherwise
+            # the output (A) of the previous layer
             self.layers[i]["L"] = self.layers[i]["W"].dot(A) + self.layers[i]["b"]
             if self.layers[i]["activation"] == "relu":
                 self.layers[i]["A"] = ActivationFunctions.relu(self.layers[i]["L"])
@@ -190,14 +360,33 @@ class NeuralNetwork:
             else:
                 raise NotImplementedError("Activation function '" + layer["activation"] + "' not implemented!")
 
+    # back propagation
     def __back_propagation(self, data: np.array, target: np.array, learning_rate: float = 0.1) -> float:
-
+        """
+        BACK PROPAGATION (INTERNAL)
+        Internal function for learning layer weights and biases using gradient
+        descent and back propagation.
+        Parameters:
+            - data: np.array
+                    input data
+            - target: np.array
+                    class labels of the input data
+            - learning_rate: float
+                    learning rate / how far in the direction of the gradient to
+                    go
+                    DEFAULT: 0.1
+        Returns:
+            - float
+                    loss of the current forward pass
+        """
+        # forward pass
         self.__forward_propagation(data)
 
         output = self.layers[-1]["A"]
         batch_size = data.shape[1]
         loss = 0
 
+        # calculate loss of the current forward pass
         if self.loss == "categorical crossentropy":
             losses = LossFunctions.categorical_cross_entropy(y_true = target, y_predicted = output)
             # reduction by sum over batch size
@@ -209,6 +398,10 @@ class NeuralNetwork:
         else:
             raise NotImplementedError("Loss function '" + self.loss + "' not implemented!")
 
+        # calculate and back pass the derivate of the loss w.r.t the output
+        # activation function
+        # this implementation suppports CCE + Softmax and BCE + Sigmoid in the
+        # output layer
         if self.loss == "categorical crossentropy" and self.layers[-1]["activation"] == "softmax":
             # for categorical cross entropy loss the derivative of softmax simplifies to
             # P(i) - Y(i)
@@ -259,6 +452,7 @@ class NeuralNetwork:
         else:
             raise NotImplementedError("The combination of '" + self.loss + " loss' and '" + self.layers[i]["activation"] + " activation' is not implemented!")
 
+        # back propagation through the remaining hidden layers
         for i in reversed(range(len(self.layers) - 1)):
 
             if i == 0:
@@ -302,7 +496,19 @@ class NeuralNetwork:
 
         return loss
 
-    def summary(self):
+    # neural network architecture summary
+    def summary(self) -> None:
+        """
+        MODEL SUMMARY
+        Print a summary of the neural network architecture.
+        Parameters:
+            - None
+        Returns:
+            - None, prints a summary of the neural network architecture to
+                    stdout
+        Example usage:
+            NN.summary()
+        """
         print("---- Model Summary ----")
         for i, layer in enumerate(self.layers):
             print("Layer " + str(i + 1) + ": " + layer["activation"])
@@ -318,8 +524,36 @@ class NeuralNetwork:
                 layer["W"].shape[0] * layer["W"].shape[1] +
                 layer["b"].shape[0] * layer["b"].shape[1]))
 
-    def fit(self, X: np.array, y: np.array, epochs: int = 100, batch_size: int = 32, learning_rate: float = 0.1, verbose = 1) -> List[float]:
-
+    # train neural network on data
+    def fit(self, X: np.array, y: np.array, epochs: int = 100, batch_size: int = 32, learning_rate: float = 0.1, verbose: int = 1) -> List[float]:
+        """
+        TRAIN MODEL
+        Train the neural network.
+        Parameters:
+            - X: np.array (samples, features)
+                    input data to train on
+            - y: np.array (samples, labels) or (labels,)
+                    labels of the input data
+            - epochs: int
+                    how many iterations to train
+                    DEFAULT: 100
+            - batch_size: int
+                    how many samples to use per backward pass
+                    DEFAULT: 32
+            - learning_rate: float
+                    learning rate / how far in the direction of the gradient to
+                    go
+                    DEFAULT: 0.1
+            - verbose: int, one of (0, 1) / bool
+                    print information for every epoch
+                    DEFAULT: 1 (True)
+        Returns:
+            - List[float]
+                    loss history over all epochs
+        Example usage:
+            NN.fit(data_train, labels_train)
+        """
+        # reshaping inputs
         if y.ndim == 1:
             y = np.reshape(y, (-1, 1))
 
@@ -329,9 +563,11 @@ class NeuralNetwork:
 
         history = []
 
+        # train network
         for i in range(epochs):
             if verbose:
                 print("Training epoch " + str(i + 1) + "...")
+            # generate random batches of size batch_size
             idx = np.random.choice(sample_size, sample_size, replace = False)
             batches = np.array_split(idx, math.ceil(sample_size / batch_size))
             batch_losses = []
@@ -349,8 +585,20 @@ class NeuralNetwork:
 
         return history
 
+    # predict data with fitted neural network
     def predict(self, X: np.array) -> np.array:
-
+        """
+        GENERATE PREDICTIONS
+        Predict labels for the given input data.
+        Parameters:
+            - X: np.array (samples, features) or (features,)
+                    input data to predict
+        Returns:
+            - np.array
+                    predictions
+        Example usage:
+            NN.predict(data_test)
+        """
         if X.ndim == 1:
             X = np.reshape(X, (1, -1))
 
