@@ -9,7 +9,7 @@ implementation.
 
 An example usage of `neuralnet.py` is given in the `Usage.ipynb` notebook.
 
-Alternatively you can open the whole code in Google Colab -> [here](https://colab.research.google.com/github/michabirklbauer/neuralnet/neuralnet-colab.ipynb).
+Alternatively you can open the whole code in Google Colab -> [here](https://colab.research.google.com/github/michabirklbauer/neuralnet/blob/master/neuralnet-colab.ipynb).
 
 ## Requirements
 
