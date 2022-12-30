@@ -16,6 +16,7 @@ def test_bcc():
         f.close()
 
     from neuralnet import NeuralNetwork
+    import numpy as np
     import pandas as pd
     from sklearn.metrics import accuracy_score
     from sklearn.preprocessing import OneHotEncoder
@@ -60,6 +61,7 @@ def test_mcc():
         f.close()
 
     from neuralnet import NeuralNetwork
+    import numpy as np
     import pandas as pd
     from sklearn.metrics import accuracy_score
     from sklearn.preprocessing import OneHotEncoder
