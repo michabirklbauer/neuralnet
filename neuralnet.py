@@ -358,7 +358,7 @@ class NeuralNetwork:
             elif self.layers[i]["activation"] == "softmax":
                 self.layers[i]["A"] = ActivationFunctions.softmax(self.layers[i]["L"])
             else:
-                raise NotImplementedError("Activation function '" + layer["activation"] + "' not implemented!")
+                raise NotImplementedError("Activation function '" + self.layers[i]["activation"] + "' not implemented!")
 
     # back propagation
     def __back_propagation(self, data: np.array, target: np.array, learning_rate: float = 0.1) -> float:
@@ -450,7 +450,7 @@ class NeuralNetwork:
             self.layers[-1]["W"] -= learning_rate * dW
             self.layers[-1]["b"] -= learning_rate * db
         else:
-            raise NotImplementedError("The combination of '" + self.loss + " loss' and '" + self.layers[i]["activation"] + " activation' is not implemented!")
+            raise NotImplementedError("The combination of '" + self.loss + " loss' and '" + self.layers[-1]["activation"] + " activation' is not implemented!")
 
         # back propagation through the remaining hidden layers
         for i in reversed(range(len(self.layers) - 1)):
